@@ -280,6 +280,71 @@ def run_forte(name, **kwargs):
     >>> energy('forte')
 
     """
+    # Get a reference wave function object from Psi4
+    ref_wfn, options = get_psi4_ref_wfn(name, **kwargs)
+
+    state, scf_info, state_weights_map, mo_space_info = init_forte_from_psi(ref_wfn, options)
+
+    # Call methods that project the orbitals (AVAS, embedding)
+    orbital_projection(ref_wfn, options)
+
+    # Run a method
+    job_type = options.get_str('JOB_TYPE')
+
+    if job_type == 'NONE':
+        forte.cleanup()
+        return ref_wfn
+
+    # Make an integral object
+    ints = forte.make_forte_integrals(ref_wfn, options, mo_space_info)
+
+    # Rotate orbitals before computation
+    orbital_rotation(scf_info, forte.forte_options, ints, mo_space_info)
+
+    # Run a method 
+    energy = 0.0
+    if job_type == 'NEWDRIVER':
+        energy = forte_driver(state_weights_map, scf_info, forte.forte_options, ints, mo_space_info)
+    else:
+        energy = forte.forte_old_methods(ref_wfn, options, ints, mo_space_info)
+    psi4.core.set_scalar_variable('CURRENT ENERGY', energy)
+
+    # Close ambit, etc.
+    forte.cleanup()
+
+    return ref_wfn
+
+
+def init_forte(ref_wfn):
+    """This function initializes Forte from a psi4 reference wave function. It's designed to
+    be used in Jupyter notebooks.
+
+    """
+    # Get a reference wave function object from Psi4
+    ref_wfn, options = get_psi4_ref_wfn('forte', ref_wfn=ref_wfn)
+
+    # Create various objects required to run Forte
+    state, scf_info, state_weights_map, mo_space_info = init_forte_from_psi(ref_wfn, options)
+
+    # Return all objects in dictionary
+    return {'state' : state,
+            'scf_info' : scf_info,
+            'state_weights_map' : state_weights_map,
+            'mo_space_info' : mo_space_info,
+            'ref_wfn' : ref_wfn,
+            'options' : options
+            }
+
+# Integration with driver routines
+psi4.driver.procedures['energy']['forte'] = run_forte
+
+
+def get_psi4_ref_wfn(name, **kwargs):
+    """
+    Returns a Psi4 reference wave function. If kwargs do not contain one, runs a SCF computation.
+
+    This function also reads options for and creates the DF and MINAO basis sets
+    """
     lowername = name.lower()
     kwargs = p4util.kwargs_lower(kwargs)
 
@@ -305,6 +370,13 @@ def run_forte(name, **kwargs):
                                                options.get_str('MINAO_BASIS'))
         ref_wfn.set_basisset('MINAO_BASIS', minao_basis)
 
+    return (ref_wfn, options)
+
+
+def init_forte_from_psi(ref_wfn, options):
+    """
+    Initialize Forte objects using a Psi4 reference wave function and options object
+    """
     # Start Forte, initialize ambit
     my_proc_n_nodes = forte.startup()
     my_proc, n_nodes = my_proc_n_nodes
@@ -312,55 +384,23 @@ def run_forte(name, **kwargs):
     # Print the banner
     forte.banner()
 
-    # Create the MOSpaceInfo object
-    mo_space_info = forte.make_mo_space_info(ref_wfn, forte.forte_options)
-
-    # Call methods that project the orbitals (AVAS, embedding)
-    orbital_projection(ref_wfn, options)
-
+    # Create various objects required to run Forte
     state = forte.make_state_info_from_psi_wfn(ref_wfn)
     scf_info = forte.SCFInfo(ref_wfn)
-    state_weights_map = forte.make_state_weights_map(forte.forte_options,ref_wfn)
+    state_weights_map = forte.make_state_weights_map(forte.forte_options,ref_wfn)    
+    mo_space_info = forte.make_mo_space_info(ref_wfn, forte.forte_options)
 
-    # Run a method
-    job_type = options.get_str('JOB_TYPE')
+    return (state, scf_info, state_weights_map, mo_space_info)
 
-    energy = 0.0
 
-    if job_type == 'NONE':
-        forte.cleanup()
-        return ref_wfn
-
-    start = timeit.timeit()
-
-    # Make an integral object
-    ints = forte.make_forte_integrals(ref_wfn, options, mo_space_info)
-
-    # Rotate orbitals before computation
+def orbital_rotation(scf_info, options, ints, mo_space_info):
+    """
+    A function to perform an orbital rotation (localization, CI-NOs, ...)
+    """
     orb_type = options.get_str("ORBITAL_TYPE")
     if orb_type != 'CANONICAL':
-        orb_t = forte.make_orbital_transformation(orb_type, scf_info, forte.forte_options, ints, mo_space_info)
+        orb_t = forte.make_orbital_transformation(orb_type, scf_info, options, ints, mo_space_info)
         orb_t.compute_transformation()
         Ua = orb_t.get_Ua()
         Ub = orb_t.get_Ub()
-
         ints.rotate_orbitals(Ua,Ub)
-
-    # Run a method
-    if (job_type == 'NEWDRIVER'):
-        energy = forte_driver(state_weights_map, scf_info, forte.forte_options, ints, mo_space_info)
-    else:
-        energy = forte.forte_old_methods(ref_wfn, options, ints, mo_space_info)
-
-    end = timeit.timeit()
-    #print('\n\n  Your calculation took ', (end - start), ' seconds');
-
-    # Close ambit, etc.
-    forte.cleanup()
-
-    psi4.core.set_scalar_variable('CURRENT ENERGY', energy)
-    return ref_wfn
-
-# Integration with driver routines
-psi4.driver.procedures['energy']['forte'] = run_forte
-
