@@ -67,11 +67,13 @@ std::shared_ptr<ForteIntegrals> make_forte_integrals(std::shared_ptr<psi::Wavefu
                                                  IntegralSpinRestriction::Restricted);
 #endif
     } else if (options->get_str("INT_TYPE") == "CUSTOM") {
-        ints = std::make_shared<CustomIntegrals>(options, ref_wfn, mo_space_info,
-                                                 IntegralSpinRestriction::Restricted);
+        ints = std::make_shared<CustomIntegrals>(options, IntegralSpinRestriction::Restricted);
     } else if (options->get_str("INT_TYPE") == "OWNINTEGRALS") {
         ints = std::make_shared<OwnIntegrals>(options, ref_wfn, mo_space_info,
                                               IntegralSpinRestriction::Restricted);
+    } else if (options->get_str("INT_TYPE") == "FCIDUMP") {
+        ints = std::make_shared<CustomIntegrals>(options, ref_wfn, mo_space_info,
+                                                 IntegralSpinRestriction::Restricted);
     } else {
         psi::outfile->Printf("\n Please check your int_type. Choices are CHOLESKY, DF, DISKDF , "
                              "DISTRIBUTEDDF Effective, CONVENTIONAL or OwnIntegrals");

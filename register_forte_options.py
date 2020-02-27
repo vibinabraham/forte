@@ -575,7 +575,7 @@ def register_integral_options(options):
     options.set_group("Integrals")
     options.add_str(
         "INT_TYPE", "CONVENTIONAL",
-        ["CONVENTIONAL", "DF", "CHOLESKY", "DISKDF", "DISTDF", "OWNINTEGRALS"],
+        ["CONVENTIONAL", "DF", "CHOLESKY", "DISKDF", "DISTDF", "OWNINTEGRALS","FCIDUMP"],
         "The algorithm used to screen the determinant"
         "- CONVENTIONAL Conventional two-electron integrals"
         "- DF Density fitted two-electron integrals"

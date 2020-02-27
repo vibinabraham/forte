@@ -347,19 +347,21 @@ def run_forte(name, **kwargs):
     lowername = name.lower()
     kwargs = p4util.kwargs_lower(kwargs)
 
-    # Compute a SCF reference, a wavefunction is return which holds the molecule used, orbitals
-    # Fock matrices, and more
-    ref_wfn = kwargs.get('ref_wfn', None)
-    if ref_wfn is None:
-        ref_wfn = psi4.driver.scf_helper(name, **kwargs)
-
-    # Get the option object
+    # Get the psi4 option object
+    optstash = p4util.OptionsState(['GLOBALS', 'DERTYPE'])
     psi4_options = psi4.core.get_options()
     psi4_options.set_current_module('FORTE')
 
     # Get the forte option object
     options = forte.forte_options
     options.get_options_from_psi4(psi4_options)
+
+    # Compute a SCF reference, a wavefunction is return which holds the molecule used, orbitals
+    # Fock matrices, and more
+    ref_wfn = kwargs.get('ref_wfn', None)
+    do_fcidump = options.get_str('INT_TYPE') is 'FCIDUMP'
+    if (ref_wfn is None) and (not do_fcidump):
+        ref_wfn = psi4.driver.scf_helper(name, **kwargs)
 
     if ('DF' in options.get_str('INT_TYPE')):
         aux_basis = psi4.core.BasisSet.build(ref_wfn.molecule(), 'DF_BASIS_MP2',
@@ -445,12 +447,6 @@ def gradient_forte(name, **kwargs):
     lowername = name.lower()
     kwargs = p4util.kwargs_lower(kwargs)
 
-    # Compute a SCF reference, a wavefunction is return which holds the molecule used, orbitals
-    # Fock matrices, and more
-    ref_wfn = kwargs.get('ref_wfn', None)
-    if ref_wfn is None:
-        ref_wfn = psi4.driver.scf_helper(name, **kwargs)
-
     # Get the psi4 option object
     optstash = p4util.OptionsState(['GLOBALS', 'DERTYPE'])
     psi4_options = psi4.core.get_options()
@@ -459,6 +455,12 @@ def gradient_forte(name, **kwargs):
     # Get the forte option object
     options = forte.forte_options
     options.get_options_from_psi4(psi4_options)
+
+    # Compute a SCF reference, a wavefunction is return which holds the molecule used, orbitals
+    # Fock matrices, and more
+    ref_wfn = kwargs.get('ref_wfn', None)
+    if ref_wfn is None:
+        ref_wfn = psi4.driver.scf_helper(name, **kwargs)
 
     if ('DF' in options.get_str('INT_TYPE')):
         raise Exception('analytic gradient is not implemented for density fitting')

@@ -77,6 +77,14 @@ std::map<IntegralType, std::string> int_type_label{{Conventional, "Conventional"
                                                    {Own, "Own"},
                                                    {Custom, "Custom"}};
 
+ForteIntegrals::ForteIntegrals(std::shared_ptr<MOSpaceInfo> mo_space_info)
+    : frozen_core_energy_(0.0), scalar_(0.0), mo_space_info_(mo_space_info) {
+    //    startup();
+    //    allocate();
+    //    transform_one_electron_integrals();
+    //    build_AOdipole_ints();
+}
+
 ForteIntegrals::ForteIntegrals(std::shared_ptr<ForteOptions> options,
                                std::shared_ptr<psi::Wavefunction> ref_wfn,
                                std::shared_ptr<MOSpaceInfo> mo_space_info,

@@ -41,8 +41,10 @@ class CustomIntegrals : public ForteIntegrals {
   public:
     /// Contructor of the class.  Calls std::shared_ptr<ForteIntegrals> ints
     /// constructor
-    CustomIntegrals(std::shared_ptr<ForteOptions> options, std::shared_ptr<psi::Wavefunction> ref_wfn,
-                    std::shared_ptr<MOSpaceInfo> mo_space_info, IntegralSpinRestriction restricted);
+    CustomIntegrals(const std::vector<double>& oei_a, const std::vector<double>& oei_b,
+                    const std::vector<double>& aphys_tei_aa,
+                    const std::vector<double>& aphys_tei_ab,
+                    const std::vector<double>& aphys_tei_bb, double nucrep);
 
     /// Grabs the antisymmetriced TEI - assumes storage in aphy_tei_*
     double aptei_aa(size_t p, size_t q, size_t r, size_t s) override;
@@ -79,9 +81,9 @@ class CustomIntegrals : public ForteIntegrals {
 
     /// Used to store the two-electron integrals (pq|rs) in chemist notation with 8-fold symmetry
     /// and addressed with the function four(p,q,r,s)
-    std::vector<double> aphys_tei_aa;
-    std::vector<double> aphys_tei_ab;
-    std::vector<double> aphys_tei_bb;
+    std::vector<double> aphys_tei_aa_;
+    std::vector<double> aphys_tei_ab_;
+    std::vector<double> aphys_tei_bb_;
 
     // ==> Class private functions <==
 

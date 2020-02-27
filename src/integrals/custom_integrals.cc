@@ -56,18 +56,54 @@ namespace forte {
  * @param restricted - type of integral transformation
  * @param resort_frozen_core -
  */
-CustomIntegrals::CustomIntegrals(std::shared_ptr<ForteOptions> options,
-                                 std::shared_ptr<psi::Wavefunction> ref_wfn,
-                                 std::shared_ptr<MOSpaceInfo> mo_space_info,
-                                 IntegralSpinRestriction restricted)
-    : ForteIntegrals(options, ref_wfn, mo_space_info, restricted) {
+CustomIntegrals::CustomIntegrals(const std::vector<double>& oei_a, const std::vector<double>& oei_b,
+                                 const std::vector<double>& aphys_tei_aa,
+                                 const std::vector<double>& aphys_tei_ab,
+                                 const std::vector<double>& aphys_tei_bb, double nucrep,
+                                 std::vector<int> mo_symmetry,
+                                 std::shared_ptr<MOSpaceInfo> mo_space_info)
+    : ForteIntegrals(mo_space_info) {
     integral_type_ = Custom;
-    print_info();
-    outfile->Printf("\n  Using Custom integrals\n\n");
 
-    gather_integrals();
+    /// We are alwasy doing a spin-restricted computation
+    spin_restriction_ = IntegralSpinRestriction::Restricted;
 
-    freeze_core_orbitals();
+    // Set Ca and Cb to the identity matrices
+
+    // Nuclear repulsion energy
+    nucrep_ = nucrep;
+
+    /// Number of irreps
+    nirrep_;
+
+    /// The number of MOs, including the ones that are frozen.
+    /// The number of correlated MOs (excluding frozen).  This is nmo - nfzc - nfzv.
+    aptei_idx_ = nso_ = nmo_ = ncmo_ = static_cast<int>(mo_symmetry.size());
+
+    one_electron_integrals_a_ = oei_a;
+    one_electron_integrals_b_ = oei_b;
+    aphys_tei_aa_ = aphys_tei_aa;
+    aphys_tei_ab_ = aphys_tei_ab;
+    aphys_tei_bb_ = aphys_tei_bb;
+
+    nmopi_ = psi::Dimension()
+
+    // Assumptions: there are no frozen MOs
+
+    /// The mapping from correlated MO to full MO (frozen + correlated)
+    //    std::vector<size_t> cmotomo_;
+
+    //    /// The number of symmetrized AOs per irrep.
+    //    psi::Dimension nsopi_;
+    //    /// The number of MOs per irrep.
+    //    psi::Dimension nmopi_;
+    //    /// The number of frozen core MOs per irrep.
+    //    psi::Dimension frzcpi_;
+    //    /// The number of frozen unoccupied MOs per irrep.
+    //    psi::Dimension frzvpi_;
+    //    /// The number of correlated MOs per irrep (non frozen).  This is nmopi -
+    //    /// nfzcpi - nfzvpi.
+    //    psi::Dimension ncmopi_;
 }
 
 double CustomIntegrals::aptei_aa(size_t p, size_t q, size_t r, size_t s) {

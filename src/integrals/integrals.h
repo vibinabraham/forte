@@ -99,13 +99,20 @@ class ForteIntegrals {
     // ==> Class Constructor and Destructor <==
 
     /**
+     * @brief Empty class constructor
+     * @param mo_space_info The MOSpaceInfo object
+     */
+    ForteIntegrals(std::shared_ptr<MOSpaceInfo> mo_space_info);
+
+    /**
      * @brief Class constructor
      * @param options The main options object
      * @param ref_wfn The reference wave function object
-     * @param restricted Select a restricted or unrestricted transformation
      * @param mo_space_info The MOSpaceInfo object
+     * @param restricted Select a restricted or unrestricted transformation
      */
-    ForteIntegrals(std::shared_ptr<ForteOptions> options, std::shared_ptr<psi::Wavefunction> ref_wfn,
+    ForteIntegrals(std::shared_ptr<ForteOptions> options,
+                   std::shared_ptr<psi::Wavefunction> ref_wfn,
                    std::shared_ptr<MOSpaceInfo> mo_space_info, IntegralSpinRestriction restricted);
 
     /// Virtual destructor to enable deletion of a Derived* through a Base*
